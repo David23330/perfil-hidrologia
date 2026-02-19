@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Perfil Longitudinal - Taylor & Schwarz</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 30px; background-color: #f8f9fa; }
+        .card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h2 { color: #2c3e50; text-align: center; }
+        table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+        th, td { border: 1px solid #dee2e6; padding: 10px; text-align: center; font-size: 0.9em; }
+        th { background-color: #2c3e50; color: white; }
+        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-excel { background-color: #27ae60; color: white; display: block; margin: 0 auto; }
+        .btn-excel:hover { background-color: #1e8449; }
+        #canvas-container { height: 400px; width: 100%; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Gráfica: Perfil Longitudinal del Río</h2>
+    <div id="canvas-container">
+        <canvas id="graficaPerfil"></canvas>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Tabla de Datos Técnicos</h2>
+    <table id="tabla-datos">
+        <thead>
+            <tr>
+                <th>Tramo</th>
+                <th>Elevación Inicial (m)</th>
+                <th>Elevación Final (m)</th>
+                <th>Longitud (m)</th>
+                <th>Dist. Acumulada (m)</th>
+            </tr>
+        </thead>
+        <tbody id="cuerpo-tabla">
+            </tbody>
+    </table>
+    <button class="btn btn-excel" onclick="exportarExcel()">Descargar Datos en Excel</button>
+</div>
+
+<script>
+    // Datos extraídos de tu imagen
+    const datosBase = [
+        {t: 1, hi: 171.35, hf: 170.1, l: 186.52},
+        {t: 2, hi: 170.1, hf: 170.01, l: 245.25},
+        {t: 3, hi: 170.01, hf: 170, l: 383.26},
+        {t: 4, hi: 170, hf: 169, l: 450.98},
+        {t: 5, hi: 169, hf: 169, l: 288.33},
+        {t: 6, hi: 169, hf: 169, l: 333.34},
+        {t: 7, hi: 169, hf: 169, l: 409.28},
+        {t: 8, hi: 169, hf: 169, l: 474.62},
+        {t: 9, hi: 169, hf: 168, l: 355.52},
+        {t: 10, hi: 168, hf: 168, l: 352.37}
+    ];
+
+    let distAcum = 0;
+    const puntosGrafica = [{x: 0, y: datosBase[0].hi}];
+    const cuerpoTabla = document.getElementById('cuerpo-tabla');
+
+    // Procesar datos para tabla y gráfica
+    datosBase.forEach(d => {
+        distAcum += d.l;
+        puntosGrafica.push({x: distAcum, y: d.hf});
+        
+        const fila = `<tr>
+            <td>${d.t}</td>
+            <td>${d.hi}</td>
+            <td>${d.hf}</td>
+            <td>${d.l}</td>
+            <td>${distAcum.toFixed(2)}</td>
+        </tr>`;
+        cuerpoTabla.innerHTML += fila;
+    });
+
+    // Configuración de la Gráfica
+    const ctx = document.getElementById('graficaPerfil').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            datasets: [{
+                label: 'Perfil del Cauce (msnm)',
+                data: puntosGrafica,
+                borderColor: '#3498db',
+                backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                fill: true,
+                tension: 0.1,
+                pointRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { type: 'linear', title: { display: true, text: 'Distancia Acumulada (m)' } },
+                y: { title: { display: true, text: 'Elevación (m)' }, min: 167 }
+            }
+        }
+    });
+
+    function exportarExcel() {
+        const tabla = document.getElementById("tabla-datos");
+        const libro = XLSX.utils.table_to_book(tabla, {sheet: "Perfil Longitudinal"});
+        XLSX.writeFile(libro, "Perfil_Rio_Taylor_Schwarz.xlsx");
+    }
+</script>
+
+</body>
+</html>
